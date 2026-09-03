@@ -232,6 +232,10 @@ td{padding:.6rem .85rem;white-space:nowrap;}
     <button onclick="go('dash',this)">Dashboard</button>
     <button onclick="go('ext',this)">Extrato</button>
   </nav>
+  <div style="display:flex;gap:6px;margin-left:12px;">
+    <button onclick="exportBackup()" style="background:rgba(0,200,240,.08);border:1px solid rgba(0,200,240,.2);color:var(--c);font-family:'Barlow Condensed',sans-serif;font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:.32rem .75rem;border-radius:6px;cursor:pointer;transition:all .18s;" onmouseover="this.style.background='rgba(0,200,240,.18)'" onmouseout="this.style.background='rgba(0,200,240,.08)'">⬇ Backup</button>
+    <label style="background:rgba(0,229,160,.08);border:1px solid rgba(0,229,160,.22);color:var(--green);font-family:'Barlow Condensed',sans-serif;font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:.32rem .75rem;border-radius:6px;cursor:pointer;transition:all .18s;" onmouseover="this.style.background='rgba(0,229,160,.18)'" onmouseout="this.style.background='rgba(0,229,160,.08)'">⬆ Importar<input type="file" id="import-file" accept=".json" style="display:none" onchange="importBackup(event)"></label>
+  </div>
 </div>
 
 <div id="main">
@@ -700,6 +704,58 @@ function imprimir(){
   const w=window.open('','_blank');
   w.document.write(`<html><head><title>Extrato Lab 3D — Gestamp</title><style>body{font-family:Arial,sans-serif;font-size:11px;padding:20px;color:#0d2137}h2{color:#1a4f72;margin-bottom:4px}p{color:#555;margin-bottom:12px}table{width:100%;border-collapse:collapse}th{background:#1a4f72;color:#fff;padding:6px 8px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em}td{padding:5px 8px;border-bottom:1px solid #dce6ef}.sum{background:#d6eaf8;padding:10px 14px;border-radius:5px;margin-bottom:12px;display:flex;gap:24px;flex-wrap:wrap}.si{display:flex;flex-direction:column}.sl{font-size:9px;color:#1a4f72;text-transform:uppercase;font-weight:700;letter-spacing:.07em}.sv{font-size:13px;font-weight:800;color:#1a4f72}</style></head><body><h2>Laboratório de Impressão 3D — Gestamp</h2><p>Gerado em ${new Date().toLocaleDateString('pt-BR')} · ${new Date().toLocaleTimeString('pt-BR')}</p><div class="sum"><div class="si"><span class="sl">Peças</span><span class="sv">${lista.length}</span></div><div class="si"><span class="sl">Economia Total</span><span class="sv">${fR(te)}</span></div><div class="si"><span class="sl">Redução Média</span><span class="sv">${fP(pm)}</span></div></div><table><thead><tr><th>Data</th><th>Setor</th><th>Item</th><th>Material</th><th>Custo At.</th><th>3D</th><th>Qtd</th><th>Tot.At.</th><th>Tot.3D</th><th>Economia</th><th>%Red.</th><th>Lead At.</th><th>Lead 3D</th><th>Ganho T.</th></tr></thead><tbody>${rows}</tbody></table></body></html>`);
   w.document.close();w.print();
+}
+
+// ── BACKUP EXPORT ──
+function exportBackup(){
+  if(!pecas.length){showToast('⚠ Nenhuma peça para exportar.');return;}
+  const payload = {
+    app: 'lab3d-gestamp',
+    versao: '1.0',
+    exportado_em: new Date().toISOString(),
+    total_pecas: pecas.length,
+    economia_total: pecas.reduce((s,p)=>s+eco(p).et,0).toFixed(2),
+    pecas
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  const data = new Date().toISOString().slice(0,10);
+  a.href = url;
+  a.download = `lab3d_backup_${data}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('✓ Backup exportado com sucesso!');
+}
+
+// ── BACKUP IMPORT ──
+function importBackup(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try {
+      const payload = JSON.parse(e.target.result);
+      if(!payload.pecas || !Array.isArray(payload.pecas)){
+        alert('Arquivo inválido. Certifique-se de usar um backup gerado por este app.');
+        return;
+      }
+      const novas   = payload.pecas;
+      const existentes = pecas.map(p=>p.id);
+      let adicionadas = 0, duplicadas = 0;
+      novas.forEach(p=>{
+        if(existentes.includes(p.id)){ duplicadas++; }
+        else { pecas.push(p); adicionadas++; }
+      });
+      save();
+      renderAcum();
+      showToast(`✓ ${adicionadas} peça(s) importada(s)${duplicadas?', '+duplicadas+' já existiam':''}.`);
+    } catch(err){
+      alert('Erro ao ler o arquivo. Verifique se é um backup válido.');
+    }
+    event.target.value = '';
+  };
+  reader.readAsText(file);
 }
 
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2800);}
