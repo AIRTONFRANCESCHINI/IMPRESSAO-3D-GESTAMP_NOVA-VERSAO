@@ -14,6 +14,38 @@
   --sur:rgba(255,255,255,.04);--bdr:rgba(255,255,255,.07);--bdr2:rgba(0,200,240,.18);
   --r:12px;
 }
+/* ── ACESSO ── */
+#tela-acesso{position:fixed;inset:0;z-index:9999;display:none;place-items:center;
+  background:var(--ink);padding:24px;}
+#tela-acesso[data-on="1"]{display:grid;}
+#tela-acesso .ac-box{width:100%;max-width:330px;}
+#tela-acesso .ac-t{font-family:'Barlow Condensed',sans-serif;font-size:1.7rem;font-weight:800;
+  letter-spacing:-.01em;line-height:1;color:var(--text);}
+#tela-acesso .ac-t em{color:var(--c);font-style:normal;}
+#tela-acesso .ac-s{font-size:.72rem;color:var(--text3);margin:.3rem 0 1.6rem;
+  font-family:'JetBrains Mono',monospace;}
+#tela-acesso label{display:block;font-family:'Barlow Condensed',sans-serif;font-size:.6rem;
+  font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text3);margin-bottom:.35rem;}
+#tela-acesso input{width:100%;padding:.62rem .8rem;margin-bottom:1rem;background:var(--sur);
+  border:1px solid var(--bdr);border-radius:8px;color:var(--text);font-family:'Barlow',sans-serif;font-size:.9rem;}
+#tela-acesso input:focus{outline:none;border-color:var(--bdr2);box-shadow:0 0 0 3px var(--c3);}
+#tela-acesso button{width:100%;padding:.7rem;background:var(--c);border:none;border-radius:8px;
+  color:var(--ink);font-family:'Barlow Condensed',sans-serif;font-size:.8rem;font-weight:800;
+  letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:filter .18s;}
+#tela-acesso button:hover{filter:brightness(1.12);}
+#tela-acesso button:disabled{opacity:.5;cursor:progress;}
+#ac-erro{margin-top:.9rem;font-size:.72rem;color:var(--red);min-height:1.1em;
+  font-family:'JetBrains Mono',monospace;}
+#tb-userbox{display:none;align-items:center;gap:7px;margin-left:10px;padding-left:12px;
+  border-left:1px solid var(--bdr);}
+#tb-user{font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--text3);
+  max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#tb-sair{background:none;border:1px solid var(--bdr);color:var(--text3);
+  font-family:'Barlow Condensed',sans-serif;font-size:.62rem;font-weight:700;letter-spacing:.08em;
+  text-transform:uppercase;padding:.25rem .6rem;border-radius:6px;cursor:pointer;transition:all .18s;}
+#tb-sair:hover{color:var(--red);border-color:var(--red);}
+#sync-dot{width:6px;height:6px;border-radius:99px;background:var(--green);flex-shrink:0;
+  box-shadow:0 0 6px var(--green);}
 *{margin:0;padding:0;box-sizing:border-box;}
 body{background:var(--ink);color:var(--text);font-family:'Barlow',sans-serif;min-height:100vh;overflow-x:hidden;}
 body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
@@ -231,10 +263,16 @@ td{padding:.6rem .85rem;white-space:nowrap;}
     <button onclick="go('pecas',this)">Peças</button>
     <button onclick="go('dash',this)">Dashboard</button>
     <button onclick="go('ext',this)">Extrato</button>
+    <button onclick="go('hist',this)">Histórico</button>
   </nav>
   <div style="display:flex;gap:6px;margin-left:12px;">
     <button onclick="exportBackup()" style="background:rgba(0,200,240,.08);border:1px solid rgba(0,200,240,.2);color:var(--c);font-family:'Barlow Condensed',sans-serif;font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:.32rem .75rem;border-radius:6px;cursor:pointer;transition:all .18s;" onmouseover="this.style.background='rgba(0,200,240,.18)'" onmouseout="this.style.background='rgba(0,200,240,.08)'">⬇ Backup</button>
     <label style="background:rgba(0,229,160,.08);border:1px solid rgba(0,229,160,.22);color:var(--green);font-family:'Barlow Condensed',sans-serif;font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:.32rem .75rem;border-radius:6px;cursor:pointer;transition:all .18s;" onmouseover="this.style.background='rgba(0,229,160,.18)'" onmouseout="this.style.background='rgba(0,229,160,.08)'">⬆ Importar<input type="file" id="import-file" accept=".json" style="display:none" onchange="importBackup(event)"></label>
+  </div>
+  <div id="tb-userbox">
+    <span id="sync-dot" title="Conectado à nuvem"></span>
+    <span id="tb-user"></span>
+    <button id="tb-sair" onclick="sair()">Sair</button>
   </div>
 </div>
 
@@ -380,6 +418,19 @@ td{padding:.6rem .85rem;white-space:nowrap;}
   </div>
 </div>
 
+<!-- ══ HISTÓRICO ══ -->
+<div class="pg" id="pg-hist">
+  <div class="ph"><div class="ph-title">Histórico <em>de Alterações</em></div><div class="ph-sub">// quem mexeu, o que mudou e quando</div></div>
+  <div class="panel">
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Quando</th><th>Quem</th><th>Ação</th><th>Item</th><th>O que mudou</th></tr></thead>
+        <tbody id="hist-body"><tr><td colspan="5"><div class="empty"><span class="empty-icon">🕘</span>Carregando...</div></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
 </div><!-- /main -->
 </div><!-- /app -->
 
@@ -416,9 +467,166 @@ td{padding:.6rem .85rem;white-space:nowrap;}
   </div>
 </div>
 <div class="toast" id="toast"></div>
+
+<!-- ══ TELA DE ACESSO ══ -->
+<div id="tela-acesso" data-on="0">
+  <div class="ac-box">
+    <div class="ac-t">Lab <em>3D</em></div>
+    <div class="ac-s">// controle de ganhos — Gestamp</div>
+    <label for="acesso-email">E-mail</label>
+    <input id="acesso-email" type="email" autocomplete="username" inputmode="email">
+    <label for="acesso-senha">Senha</label>
+    <input id="acesso-senha" type="password" autocomplete="current-password">
+    <button id="acesso-btn" type="button" onclick="entrar()">Entrar</button>
+    <div id="ac-erro" role="alert"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
-let pecas = JSON.parse(localStorage.getItem('lab3d_v4')||'[]');
-const save = () => localStorage.setItem('lab3d_v4', JSON.stringify(pecas));
+/* ══════════════════════════════════════════════════════════════
+   CONFIGURAÇÃO — troque as duas linhas abaixo pelas suas chaves.
+   Supabase > Project Settings > Data API  (URL)
+   Supabase > Project Settings > API Keys  (chave anon / public)
+   ══════════════════════════════════════════════════════════════ */
+const SUPABASE_URL  = 'https://vflzzegjxwlrrivpsokl.supabase.co';
+const SUPABASE_ANON = 'sb_publishable_rbezUgTUnaufg7GnZONqHA_386nzJ4I';
+
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+let pecas = [];
+const semRid = o => { const c = {...o}; delete c._rid; return c; };
+
+// ── LEITURA ──
+async function carregar(){
+  const {data, error} = await sb.from('registros')
+    .select('id,dados,criado_em')
+    .eq('excluido', false)
+    .order('criado_em', {ascending:true});
+  if(error){ showToast('⚠ Erro ao carregar: '+error.message); return; }
+  pecas = data.map(r => ({...r.dados, _rid:r.id}));
+}
+
+// ── ESCRITA ──
+async function dbInserir(obj){
+  const {error} = await sb.from('registros').insert({dados:semRid(obj)});
+  if(error) throw error;
+}
+async function dbAtualizar(rid, obj){
+  const {error} = await sb.from('registros').update({dados:semRid(obj)}).eq('id', rid);
+  if(error) throw error;
+}
+async function dbExcluir(rid){
+  const {error} = await sb.from('registros').update({excluido:true}).eq('id', rid);
+  if(error) throw error;
+}
+
+// ── RECARREGA E REDESENHA A PÁGINA ATIVA ──
+async function recarregar(){
+  await carregar();
+  renderAcum();
+  const ativa = document.querySelector('.pg.on');
+  if(!ativa) return;
+  if(ativa.id==='pg-pecas') renderTbl();
+  if(ativa.id==='pg-dash')  renderDash();
+  if(ativa.id==='pg-ext')   initExt();
+  if(ativa.id==='pg-hist')  renderHist();
+}
+
+// ── TEMPO REAL: atualiza quando um colega salva algo ──
+function ligarRealtime(){
+  sb.channel('registros-ao-vivo')
+    .on('postgres_changes', {event:'*', schema:'public', table:'registros'}, () => recarregar())
+    .subscribe();
+}
+
+// ── ACESSO ──
+async function iniciarApp(){
+  const {data} = await sb.auth.getSession();
+  if(!data.session){
+    document.getElementById('tela-acesso').dataset.on = '1';
+    document.getElementById('acesso-email').focus();
+    return;
+  }
+  document.getElementById('tela-acesso').dataset.on = '0';
+  document.getElementById('tb-user').textContent = data.session.user.email;
+  document.getElementById('tb-userbox').style.display = 'flex';
+  await recarregar();
+  ligarRealtime();
+}
+
+async function entrar(){
+  const email = document.getElementById('acesso-email').value.trim();
+  const senha = document.getElementById('acesso-senha').value;
+  const btn   = document.getElementById('acesso-btn');
+  const erro  = document.getElementById('ac-erro');
+  if(!email || !senha){ erro.textContent = 'Preencha e-mail e senha.'; return; }
+  btn.disabled = true; btn.textContent = 'Entrando...'; erro.textContent = '';
+  const {error} = await sb.auth.signInWithPassword({email, password:senha});
+  btn.disabled = false; btn.textContent = 'Entrar';
+  if(error){
+    const m = (error.message||'').toLowerCase();
+    let txt = error.message;
+    if(m.includes('invalid login'))       txt = 'E-mail ou senha não conferem.';
+    else if(m.includes('not confirmed'))  txt = 'E-mail não confirmado. No painel da Supabase, apague o usuário e crie de novo marcando "Auto Confirm User".';
+    else if(m.includes('failed to fetch'))txt = 'Sem conexão com a Supabase. Confira a URL e a chave no topo do script.';
+    else if(m.includes('invalid api key'))txt = 'Chave inválida. Copie de novo em Project Settings > API Keys.';
+    console.error('Erro de login:', error);
+    erro.textContent = txt;
+    document.getElementById('acesso-senha').value = '';
+    document.getElementById('acesso-senha').focus();
+    return;
+  }
+  await iniciarApp();
+}
+
+async function sair(){ await sb.auth.signOut(); location.reload(); }
+
+// ── HISTÓRICO DE ALTERAÇÕES ──
+const ROTULOS = {nome:'Item', setor:'Setor', material:'Material', ca:'Custo atual',
+  c3:'Custo 3D', qt:'Qtd', la:'Lead atual', l3:'Lead 3D', forn:'Fornecedor',
+  obs:'Obs', data:'Data', iso:'Data'};
+
+function diff(antes, depois){
+  if(!antes) return 'registro criado';
+  const mudou = [];
+  Object.keys(ROTULOS).forEach(k=>{
+    if(k==='iso') return;
+    const a = antes[k] ?? '', d = depois[k] ?? '';
+    if(String(a) !== String(d)) mudou.push(ROTULOS[k]+': '+(a===''?'—':a)+' → '+(d===''?'—':d));
+  });
+  return mudou.length ? mudou.join(' · ') : 'sem mudança de valores';
+}
+
+async function renderHist(){
+  const body = document.getElementById('hist-body');
+  const {data, error} = await sb.from('registros_historico')
+    .select('acao,dados_antes,dados_depois,autor_email,em')
+    .order('em', {ascending:false})
+    .limit(200);
+  if(error){
+    body.innerHTML = '<tr><td colspan="5"><div class="empty">⚠ '+error.message+'</div></td></tr>';
+    return;
+  }
+  if(!data.length){
+    body.innerHTML = '<tr><td colspan="5"><div class="empty"><span class="empty-icon">🕘</span>Nenhuma alteração registrada</div></td></tr>';
+    return;
+  }
+  const COR = {criou:'tg', editou:'tb_', excluiu:'tr_'};
+  body.innerHTML = data.map(l=>{
+    const dt = new Date(l.em);
+    const quando = dt.toLocaleDateString('pt-BR')+' '+dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    const item = (l.dados_depois && l.dados_depois.nome) || (l.dados_antes && l.dados_antes.nome) || '—';
+    const oque = l.acao==='excluiu' ? 'registro removido da listagem' : diff(l.dados_antes, l.dados_depois);
+    return `<tr>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:.66rem;color:var(--text3)">${quando}</td>
+      <td style="font-size:.72rem;color:var(--text2)">${l.autor_email||'—'}</td>
+      <td><span class="tag ${COR[l.acao]||'tb_'}">${l.acao}</span></td>
+      <td><strong>${item}</strong></td>
+      <td style="font-size:.72rem;color:var(--text2)">${oque}</td>
+    </tr>`;
+  }).join('');
+}
 
 // ── NAV ──
 function go(id, btn){
@@ -429,6 +637,7 @@ function go(id, btn){
   if(id==='dash') renderDash();
   if(id==='pecas') renderTbl();
   if(id==='ext') initExt();
+  if(id==='hist') renderHist();
 }
 
 // ── HELPERS ──
@@ -491,13 +700,13 @@ function upPreview(){
 }
 
 // ── SALVAR ──
-function salvar(){
+async function salvar(){
   const nome=document.getElementById('nome').value.trim();
   const c3v=parseFloat(document.getElementById('c3').value);
   if(!nome||isNaN(c3v)){alert('Preencha ao menos Nome do Item e Custo 3D.');return;}
   const dv=document.getElementById('data_reg').value;
-  pecas.push({
-    id:Date.now(),
+  const novo = {
+    id:Date.now()*1000+Math.floor(Math.random()*1000),
     iso:dv||new Date().toISOString().slice(0,7),
     data:dv?(([y,m])=>m+'/'+y)(dv.split('-')):new Date().toLocaleDateString('pt-BR'),
     setor:document.getElementById('setor').value.trim()||'Geral',
@@ -508,8 +717,10 @@ function salvar(){
     l3:document.getElementById('l3').value||'',
     forn:document.getElementById('forn').value||'',
     obs:document.getElementById('obs').value||''
-  });
-  save(); renderAcum(); showToast('✓ Peça salva!'); limpar();
+  };
+  try{ await dbInserir(novo); }
+  catch(e){ showToast('⚠ Não salvou: '+e.message); return; }
+  await recarregar(); showToast('✓ Peça salva na nuvem!'); limpar();
 }
 
 function limpar(){
@@ -551,7 +762,13 @@ function renderTbl(){
     </tr>`;
   }).join('');
 }
-function del(id){if(!confirm('Remover?'))return;pecas=pecas.filter(p=>p.id!==id);save();renderTbl();renderAcum();}
+async function del(id){
+  if(!confirm('Remover?'))return;
+  const p=pecas.find(x=>x.id===id); if(!p)return;
+  try{ await dbExcluir(p._rid); }
+  catch(e){ showToast('⚠ Não removeu: '+e.message); return; }
+  await recarregar(); showToast('✓ Removido — continua no histórico.');
+}
 
 // ── MODAL ──
 function openModal(id){
@@ -571,8 +788,8 @@ function openModal(id){
   document.getElementById('modal').classList.add('on');
 }
 function closeModal(){document.getElementById('modal').classList.remove('on');}
-function saveEdit(){
-  const id=parseInt(document.getElementById('e-id').value);
+async function saveEdit(){
+  const id=Number(document.getElementById('e-id').value);
   const idx=pecas.findIndex(p=>p.id===id);if(idx<0)return;
   const p=pecas[idx], nd=document.getElementById('e-data').value;
   if(nd){p.iso=nd;const[y,m]=nd.split('-');p.data=m+'/'+y;}
@@ -586,7 +803,9 @@ function saveEdit(){
   p.qt=parseInt(document.getElementById('e-qt').value)||1;
   p.l3=document.getElementById('e-l3').value;
   p.obs=document.getElementById('e-obs').value;
-  pecas[idx]=p;save();closeModal();renderTbl();renderAcum();showToast('✓ Atualizado!');
+  try{ await dbAtualizar(p._rid, p); }
+  catch(e){ showToast('⚠ Não atualizou: '+e.message); return; }
+  closeModal(); await recarregar(); showToast('✓ Atualizado!');
 }
 document.getElementById('modal').addEventListener('click',function(e){if(e.target===this)closeModal();});
 
@@ -733,23 +952,24 @@ function importBackup(event){
   const file = event.target.files[0];
   if(!file) return;
   const reader = new FileReader();
-  reader.onload = function(e){
+  reader.onload = async function(e){
     try {
       const payload = JSON.parse(e.target.result);
       if(!payload.pecas || !Array.isArray(payload.pecas)){
         alert('Arquivo inválido. Certifique-se de usar um backup gerado por este app.');
         return;
       }
-      const novas   = payload.pecas;
+      const novas      = payload.pecas;
       const existentes = pecas.map(p=>p.id);
-      let adicionadas = 0, duplicadas = 0;
-      novas.forEach(p=>{
-        if(existentes.includes(p.id)){ duplicadas++; }
-        else { pecas.push(p); adicionadas++; }
-      });
-      save();
-      renderAcum();
-      showToast(`✓ ${adicionadas} peça(s) importada(s)${duplicadas?', '+duplicadas+' já existiam':''}.`);
+      const paraSubir  = novas.filter(p=>!existentes.includes(p.id));
+      const duplicadas = novas.length - paraSubir.length;
+      if(paraSubir.length){
+        const {error} = await sb.from('registros')
+          .insert(paraSubir.map(p=>({dados:semRid(p)})));
+        if(error){ showToast('⚠ Não importou: '+error.message); return; }
+      }
+      await recarregar();
+      showToast(`✓ ${paraSubir.length} peça(s) importada(s)${duplicadas?', '+duplicadas+' já existiam':''}.`);
     } catch(err){
       alert('Erro ao ler o arquivo. Verifique se é um backup válido.');
     }
@@ -761,7 +981,7 @@ function importBackup(event){
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2800);}
 
 // ── INIT ──
-renderAcum();
+iniciarApp();
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 </body>
